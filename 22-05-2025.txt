@@ -1,0 +1,95 @@
+CREATE DATABASE IF NOT EXISTS company_db;
+USE company_db;
+CREATE TABLE Worker (
+	WORKER_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	FIRST_NAME CHAR(25),
+	LAST_NAME CHAR(25),
+	SALARY INT,
+	JOINING_DATE DATETIME,
+	DEPARTMENT CHAR(25)
+);
+use company_db;
+INSERT INTO Worker 
+	(WORKER_ID, FIRST_NAME, LAST_NAME, SALARY, JOINING_DATE, DEPARTMENT) VALUES
+		(001, 'Monika', 'Arora', 100000, '14-02-20 09.00.00', 'HR'),
+		(002, 'Niharika', 'Verma', 80000, '14-06-11 09.00.00', 'Admin'),
+		(003, 'Vishal', 'Singhal', 300000, '14-02-20 09.00.00', 'HR'),
+		(004, 'Amitabh', 'Singh', 500000, '14-02-20 09.00.00', 'Admin'),
+		(005, 'Vivek', 'Bhati', 500000, '14-06-11 09.00.00', 'Admin'),
+		(006, 'Vipul', 'Diwan', 200000, '14-06-11 09.00.00', 'Account'),
+		(007, 'Satish', 'Kumar', 75000, '14-01-20 09.00.00', 'Account'),
+		(008, 'Geetika', 'Chauhan', 90000, '14-04-11 09.00.00', 'Admin');
+
+SELECT * FROM Worker;
+
+SELECT COUNT(*) FROM Worker WHERE DEPARTMENT = 'Admin';
+
+SELECT MAX(DEPARTMENT) FROM Worker;
+
+SELECT DEPARTMENT, SUM(SALARY) AS TotalSalary
+FROM Worker
+GROUP BY DEPARTMENT
+ORDER BY TotalSalary ASC
+LIMIT 1;
+
+SELECT DEPARTMENT, COUNT(*) AS DeptCount
+FROM Worker
+GROUP BY DEPARTMENT
+HAVING COUNT(*) > 3;
+
+SELECT DEPARTMENT, COUNT(*) AS DeptCount
+FROM Worker
+GROUP BY DEPARTMENT
+HAVING COUNT(*) > 3
+ORDER BY DeptCount DESC
+LIMIT 1 OFFSET 1;
+
+SELECT FIRST_NAME, DEPARTMENT
+FROM Worker
+WHERE SALARY > (SELECT AVG(SALARY) FROM Worker);
+
+SELECT DEPARTMENT
+FROM Worker
+GROUP BY DEPARTMENT
+HAVING COUNT(*) > (
+    SELECT AVG(dept_count) FROM (
+        SELECT COUNT(*) AS dept_count FROM Worker GROUP BY DEPARTMENT
+    ) AS DeptCounts
+);
+
+CREATE TABLE Student (
+	S_ID INT,
+	S_NAME VARCHAR(25)
+);
+
+INSERT INTO Student VALUES 
+(101, 'A'), 
+(102, 'B'),
+(103, 'C'),
+(104, 'D');
+
+CREATE TABLE Address (
+	S_ID INT,
+	S_ADDRESS VARCHAR(25)
+);
+
+INSERT INTO Address VALUES 
+(101, 'coimbatore'),
+(104, 'chennai'),
+(105, 'pune');
+
+SELECT * FROM Student CROSS JOIN Address;
+
+SELECT * FROM Student INNER JOIN Address ON Student.S_ID = Address.S_ID;
+
+SELECT * FROM Student LEFT OUTER JOIN Address ON Student.S_ID = Address.S_ID;
+
+SELECT * FROM Student RIGHT OUTER JOIN Address ON Student.S_ID = Address.S_ID;
+
+SELECT SALARY
+FROM Worker W1
+WHERE (
+  SELECT COUNT(DISTINCT W2.SALARY)
+  FROM Worker W2
+  WHERE W2.SALARY >= W1.SALARY
+) = 5;
