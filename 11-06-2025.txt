@@ -1,0 +1,39 @@
+db.products.find(
+  { price: { $gte: 700, $lte: 900 } },
+  { _id: 0, name: 1 }
+)
+
+MongoDatabase database = mongoClient.getDatabase("vit");
+        MongoCollection<Document> collection = database.getCollection("products");
+        Document priceRangeQuery = new Document("price", new Document("$gte", 700).append("$lte", 900));
+        FindIterable<Document> products = collection.find(priceRangeQuery);
+
+db.products.aggregate([
+  {
+    $group: {
+      _id: null,
+      averagePrice: { $avg: "$price" }
+    }
+  }
+])
+
+int totalPrice = 0;
+        int count = 0 ;
+
+        for (Document doc : collection.find()) {
+            Integer price = doc.getInteger("price");
+            if (price != null) {
+                totalPrice += price;
+                count ++ ;
+            }
+        }
+
+        System.out.println("Average Price: " + totalPrice/count);
+
+AggregateIterable<Document> result = collection.aggregate(Arrays.asList(
+    group(null, avg("avgPrice", "$price"))
+));
+
+for (Document doc : result) {
+    System.out.println("Average Price: " + doc.getDouble("avgPrice"));
+}
