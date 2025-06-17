@@ -1,0 +1,261 @@
+use san
+switched to db san
+db.sales.insertMany([
+	{ "_id" : 1, "item" : "Americanos", "price" : 5, "size": "Short", "quantity" : 22, "date" : ISODate("2022-01-15T08:00:00Z") },
+	{ "_id" : 2, "item" : "Cappuccino", "price" : 6, "size": "Short","quantity" : 12, "date" : ISODate("2022-01-16T09:00:00Z") },
+	{ "_id" : 3, "item" : "Lattes", "price" : 15, "size": "Grande","quantity" : 25, "date" : ISODate("2022-01-16T09:05:00Z") },
+	{ "_id" : 4, "item" : "Mochas", "price" : 25,"size": "Tall", "quantity" : 11, "date" : ISODate("2022-02-17T08:00:00Z") },
+	{ "_id" : 5, "item" : "Americanos", "price" : 10, "size": "Grande","quantity" : 12, "date" : ISODate("2022-02-18T21:06:00Z") },
+	{ "_id" : 6, "item" : "Cappuccino", "price" : 7, "size": "Tall","quantity" : 20, "date" : ISODate("2022-02-20T10:07:00Z") },
+	{ "_id" : 7, "item" : "Lattes", "price" : 25,"size": "Tall", "quantity" : 30, "date" : ISODate("2022-02-21T10:08:00Z") },
+	{ "_id" : 8, "item" : "Americanos", "price" : 10, "size": "Grande","quantity" : 21, "date" : ISODate("2022-02-22T14:09:00Z") },
+	{ "_id" : 9, "item" : "Cappuccino", "price" : 10, "size": "Grande","quantity" : 17, "date" : ISODate("2022-02-23T14:09:00Z") },
+	{ "_id" : 10, "item" : "Americanos", "price" : 8, "size": "Tall","quantity" : 15, "date" : ISODate("2022-02-25T14:09:00Z")}
+]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': 1,
+    '1': 2,
+    '2': 3,
+    '3': 4,
+    '4': 5,
+    '5': 6,
+    '6': 7,
+    '7': 8,
+    '8': 9,
+    '9': 10
+  }
+}
+db.sales.aggregate([
+  {
+$group:{
+_id:"$item",
+maxQty:{$max:{$multiply:["$quantity","$price"]}}}}])
+{
+  _id: 'Americanos',
+  maxQty: 210
+}
+{
+  _id: 'Lattes',
+  maxQty: 750
+}
+{
+  _id: 'Cappuccino',
+  maxQty: 170
+}
+{
+  _id: 'Mochas',
+  maxQty: 275
+}
+db.sales.aggregate([
+  {
+$group:{
+_id:"$item",
+maxQty:{$max:"$quantity"}}}])
+{
+  _id: 'Mochas',
+  maxQty: 11
+}
+{
+  _id: 'Americanos',
+  maxQty: 22
+}
+{
+  _id: 'Lattes',
+  maxQty: 30
+}
+{
+  _id: 'Cappuccino',
+  maxQty: 20
+}
+db.sales.aggregate([
+  {
+    $group: {
+      _id: null,
+      maxQty: { $max: '$quantity' }
+    }
+  },
+  {
+    $project: {
+      _id: 0
+    }
+  }
+]);
+{
+  maxQty: 30
+}
+db.sales.aggregate([
+    { $addFields: { totalValue: { $multiply: ["$price", "$quantity"] } } },
+    { $sort: { totalValue: -1 } },
+    { $limit: 1 },
+    { $project: { item: 1, totalValue: 1, _id: 0 } }
+])
+{
+  item: 'Lattes',
+  totalValue: 750
+}
+db.sales.aggregate([
+  {
+    $project: {
+      item: 1,
+      totalSale: { $multiply: ["$price", "$quantity"] }
+    }
+  },
+  {
+    $group: {
+      _id: "$item",
+      sales: { $push: "$totalSale" }
+    }
+  },
+  {
+    $project: {
+      secondMax: {
+        $arrayElemAt: [
+          { $slice: [ { $reverseArray: { $sortArray: "$sales" } }, 2 ] },
+          1
+        ]
+      }
+    }
+  }
+])
+MongoServerError[Location2942500]: Invalid $project :: caused by :: $sortArray requires an object as an argument, found: string
+db.sales.aggregate([{$group:{_id:"$item",max_pr:{$max:{$multiply:["$quantity","$price"]}}}},{$sort:{max_qt:-1}},{$limit:1}]);
+{
+  _id: 'Cappuccino',
+  max_pr: 170
+}
+db.sales2.aggregate([{$group:{_id:"$item",maxrev:{$max:{$multiply:["$price","$quantity"]}}}}])
+db.sales.aggregate([{$group:{_id:"$item",max_qt:{$max:"$quantity"}}},{$sort:{max_qt:-1}},{$limit:2}]).skip(1);
+{
+  _id: 'Americanos',
+  max_qt: 22
+}
+db.sales.aggregate([
+  {
+    $addFields: {
+      totalSale: { $multiply: ["$price", "$quantity"] }
+    }
+  },
+  {
+    $sort: { item: 1, totalSale: -1 }
+  },
+  {
+    $group: {
+      _id: "$item",
+      salesList: { $push: "$totalSale" }
+    }
+  },
+  {
+    $project: {
+      secondMaxSale: { $arrayElemAt: ["$salesList", 1] }
+    }
+  }
+]);
+{
+  _id: 'Americanos',
+  secondMaxSale: 120
+}
+{
+  _id: 'Lattes',
+  secondMaxSale: 375
+}
+{
+  _id: 'Cappuccino',
+  secondMaxSale: 140
+}
+{
+  _id: 'Mochas'
+}
+db.sales.createIndex({item:1})
+item_1
+db.sales.getIndexes()
+[
+  { v: 2, key: { _id: 1 }, name: '_id_' },
+  { v: 2, key: { item: 1 }, name: 'item_1' }
+]
+db.sales.dropIndex({'item':1})
+{ nIndexesWas: 2, ok: 1 }
+db.users.insertMany([
+   { email:  "john@test.com", name: "john"},
+   { email:  "jane@test.com", name: "jane"},
+]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('6841a17630b3c8abddf80a46'),
+    '1': ObjectId('6841a17630b3c8abddf80a47')
+  }
+}
+db.users.find()
+{
+  _id: ObjectId('6841a17630b3c8abddf80a46'),
+  email: 'john@test.com',
+  name: 'john'
+}
+{
+  _id: ObjectId('6841a17630b3c8abddf80a47'),
+  email: 'jane@test.com',
+  name: 'jane'
+}
+db.users.createIndex({email:1},{unique:true});
+email_1
+db.users.drop()
+true
+db.users.insertMany([
+   { email:  "john@test.com", name: "john"},
+   { email:  "john@test.com", name: "johny"},
+   { email:  "jane@test.com", name: "jane"},
+]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('6841a28630b3c8abddf80a48'),
+    '1': ObjectId('6841a28630b3c8abddf80a49'),
+    '2': ObjectId('6841a28630b3c8abddf80a4a')
+  }
+}
+db.users.deleteOne({name:"johny",email:"john@test.com"});
+{
+  acknowledged: true,
+  deletedCount: 1
+}
+db.users.createIndex({email:1},{unique:true});
+email_1
+db.locations.insertOne({
+address:"Downtown San Jose, CA, USA",
+lat:37.335480,
+long:-121.893028
+})
+{
+  acknowledged: true,
+  insertedId: ObjectId('6841a43e30b3c8abddf80a4b')
+}
+db.locations.createIndex({
+lat:1,
+long:1
+},{unique:true});
+lat_1_long_1
+db.locations.insertOne({
+address:"Dev Bootcamp",
+lat:37.3354,
+long:-122.893028})
+{
+  acknowledged: true,
+  insertedId: ObjectId('6841a50830b3c8abddf80a4c')
+}
+db.locations.insertOne({
+address:"San",
+lat:37.345354,
+long:-121.893028})
+{
+  acknowledged: true,
+  insertedId: ObjectId('6841a52430b3c8abddf80a4d')
+}
+db.movies.createIndex({title:1,year:1})
+title_1_year_1
+db.collection.dropIndexes()
+MongoServerError[NamespaceNotFound]: ns not found san.collection
+san
+Selection deleted
+

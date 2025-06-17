@@ -1,0 +1,132 @@
+SHOW DATABASES;
+CREATE DATABASE vit;
+USE vit;
+
+CREATE TABLE students (
+    student_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    department VARCHAR(50)
+);
+
+CREATE TABLE courses (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(100),
+    credits INT
+);
+
+CREATE TABLE semesters (
+    semester_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    semester_name VARCHAR(20),
+    year INT,
+    FOREIGN KEY (student_id) REFERENCES students(student_id)
+);
+
+CREATE TABLE examinations (
+    exam_id INT AUTO_INCREMENT PRIMARY KEY,
+    semester_id INT,
+    course_id INT,
+    exam_type VARCHAR(50),
+    score DECIMAL(5,2),
+    FOREIGN KEY (semester_id) REFERENCES semesters(semester_id),
+    FOREIGN KEY (course_id) REFERENCES courses(course_id)
+);
+
+INSERT INTO students (name, email, department) VALUES
+('B', 'ananya@vit.ac.in', 'btech'),
+('A', 'rahul@vit.ac.in', 'mtech');
+
+INSERT INTO courses (course_name, credits) VALUES
+('DSA', 4),
+('AI', 3);
+
+INSERT INTO semesters (student_id, semester_name, year) VALUES
+(1, 'Spring', 2025),
+(2, 'Spring', 2025);
+
+INSERT INTO examinations (semester_id, course_id, exam_type, score) VALUES
+(1, 1, 'Midterm', 88.5),
+(1, 1, 'Final', 92.0),
+(2, 2, 'Midterm', 80.0),
+(2, 2, 'Final', 85.0);
+
+package connection;
+
+import java.sql.*;
+
+public class DBConnection {
+    public static void main(String[] args){
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/vit", "root", "sanjananalam");
+            System.out.println(con);
+
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM courses");
+
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getInt(3));
+            }
+
+            con.close();
+        } catch (Exception e) {
+            System.out.println("Sorry for inconvience's pls check the credenticals");
+            e.printStackTrace();
+        }
+    }
+}
+
+package crud_operations;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+
+public class DB_Connection {
+    public Connection get_connection() {
+        Connection connection = null;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vit", "root", "sanjananalam");
+        } catch (Exception e) {
+            System.out.println("Connection failed: " + e.getMessage());
+        }
+        return connection;
+    }
+}
+
+package crud_operation;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+import crud_operations.crud_operation.DB_Connection;
+
+public class crud_operation {
+
+    public static void main(String[] args) {
+        crud_operation objTest = new crud_operation();
+
+        objTest.insertCourse("DS", 4);
+        objTest.insertCourse("OS", 3);
+    }
+
+    public void insertCourse(String courseName, int credits) {
+        DB_Connection db = new DB_Connection();
+        Connection connection = db.get_connection();
+        PreparedStatement ps = null;
+
+        try {
+            String query = "INSERT INTO courses (course_name, credits) VALUES (?, ?)";
+            ps = connection.prepareStatement(query);
+            ps.setString(1, courseName);
+            ps.setInt(2, credits);
+
+            System.out.println("Executing: " + ps);
+            ps.executeUpdate();
+            System.out.println("Course inserted successfully!");
+        } catch (Exception e) {
+            System.out.println("Error inserting course: " + e.getMessage());
+        }
+    }
+}
